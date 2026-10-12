@@ -43,7 +43,7 @@ The @fig-station-loc below shows locations of the watersheds in the dataset.
 
 ## Key Variables
 
-The key variables that are used to answer the research question are `PercentUrbanLandUse` and `SumPyrethroid_ToxicUnits`
+The key variables that are used to answer the research question are `PercentUrbanLandUse` and `SumPyrethroid_ToxicUnits`.
 
 ### Percent Urban Land Use
 
@@ -51,7 +51,11 @@ The key variables that are used to answer the research question are `PercentUrba
 
 ### Sum Pyrethroid Toxic Units
 
-`SumPyrethroid_ToxicUnits` represents the potential for a pyrethroid pesticide to cause toxicity, according to @phillips2020spot. In order to record these values at the various waterways in California, SPoT surveys are conducted every year between late spring to fall, where sediment is collected from recent stream bed deposits after a high flow season and tested for contaminants like pyrethroid pesticides. The SPoT 10 year report states that the contamination results should not be interpreted "as a characterization of the entire stream in which study sites were located" [@phillips2020spot]. The report rather suggests that the readings should be understood as relative indicators of annual pollutant mobilization and transport within the watersheds. In the dataset, 40 values out of 100 for `SumPyrethroid_ToxicUnits` are 0. This most likely due to the fact these pyrethroid readings correspond to watersheds location at areas that are classified as Open or Agricultural for the their `LandUse`.
+Pyrethroids are man-made insecticides that are used are commonly used by farmers on their crops to protect against insects. They are also used in bug spray, pet shampoos, flea/tick treatment, etc. Pyrethroids kill insects by mimicking natural compounds called pyrethrins found in chrysanthemum flowers that are toxic to insects (HolynskaIwan2020). Although these chemicals are generally not harmful to humans, 
+
+In the dataset chosen for this paper, `SumPyrethroid_ToxicUnits` represents the potential for a pyrethroid pesticide to cause toxicity, according to @phillips2020spot. In order to record these values at the various waterways in California, SPoT surveys are conducted every year between late spring to fall, where sediment is collected from recent stream bed deposits after a high flow season and tested for contaminants like pyrethroid pesticides. The SPoT 10 year report states that the contamination results should not be interpreted "as a characterization of the entire stream in which study sites were located" [@phillips2020spot]. The report rather suggests that the readings should be understood as relative indicators of annual pollutant mobilization and transport within the watersheds. In the dataset, 40 values out of 100 for `SumPyrethroid_ToxicUnits` are 0. This most likely due to the fact these pyrethroid readings correspond to watersheds location at areas that are classified as Open or Agricultural for the their `LandUse`.
+
+![Comparison of Percent Urban Land use and Sum Pyrethroid Toxicity in a scatter plot](images/scatter_plot.png){#fig-scatter-plot fig-align="center" width="450"}
 
 # Method
 
@@ -75,34 +79,45 @@ The simple linear regression model assumes the following conditions:
 
 2.  The dataset is representative of the population of interest
 
-3.  Additivity and linearity
+3.  The mean function is correct
 
-4.  All errors $\varepsilon_i$ are independent and normally distributed with mean 0 and finite variance
+4.  All errors $\varepsilon_i$ are independent
 
-## Testing the assumptions
+5.  Errors are normally distributed and have finite variance
 
-1.  The predictor variable used in this model is the percentage of urban land use and the response variable is th Sum Pyrethroid toxicity units. Based on the dataset, the variables accurate represent the quantities such that the research question can be answered.
+## Testing the assumptions {#test-assump}
+
+1.  The predictor variable used in this model is the percentage of urban land use and the response variable is the Sum Pyrethroid toxicity units. Based on the dataset, the variables accurate represent the quantities such that the research question can be answered.
 
 2.  The stations are distributed across California as shown in @fig-station-loc, but they were selected through a targeted monitoring design rather than random sampling. Therefore, the results should be generalized primarily to SPoT-monitored watersheds and interpreted cautiously when discussing California waterways more broadly.
 
-3.  
+3.  The scatter plot comparing `PercentUrbanLandUse` and `SumPyrethroid_ToxicUnits` in @fig-scatter-plot and the residual plot in @fig-residual do not show any evidence of the relationship between the variables as non-linear. Therefore, there is no reason to conclude that the fitting a linear model for this case would be incorrect.
 
-4.  The residual plot below shows that there is unequal variance in the errors. Moreover, there is a very noticeable outlier in the data as well which can be seen in the figure below.
+4.  Knowing the sample information about one SPoT monitoring watershed could tell us information about surrounding watershed's `SumPyrethroid_ToxicUnits` values due to the fact that the watersheds chosen when compiling this dataset were not randomly chosen, they were instead picked for a targeted monitoring program. Hence, the errors may not be independent since samples collected from the same region in California could have similar `SumPyrethroid_ToxicUnits` values.
+
+5.  The residual plot below shows that there is unequal variance in the errors. There is also a very noticeable outlier in the data as well which can be seen in @fig-qq. Moreover, to check for normality of errors I have used a QQ-plot as seen in @fig-qq. @fig-qq shows that the error quantiles line up with the normal quantiles line with some deviation towards the right end. However, I will still assume that the errors are normal. 
+
+::: {#fig-elephants layout-ncol=2}
+![Comparing the model residuals and the fitted values](images/residual_plot.png){#fig-residual width="300"}
+
+![QQ-plot comparing the quantiles of the model residuals against the normal quantiles](images/qq-plot.png){#fig-qq width="300"}
+
+:::
 
 
-<!-- ![](images/residual_plot.png){fig-align="center" width="450"} -->
+
+
 
 ## Hypothesis Test
 
-The null and alternative hypothesis are:
+To test whether there is an association between the `PercentUrbanLandUse` and `SumPyrethroid_ToxicUnits`, I use a a two-sided hypothesis test with the null and alternative hypothesis as follows:
 
 $$
-H_0: \beta_1 = 0
-$$
+H_0: \beta_1 = 0, H_a: \beta_1 \neq 0
+$$ 
 
-$$
-H_A: \beta_1 \neq 0
-$$
+
+In order to draw any meaningful conclusions from this hypothesis test, it is necessary that the requirements for this test are met: the errors must be independent and normal. As noted in @test-assump that the errors are normal, however, they may not be independent. This puts a limitation on this experiment because violating the assumptions mean that the 
 
 # Results
 

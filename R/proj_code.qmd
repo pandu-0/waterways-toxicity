@@ -138,7 +138,6 @@ plot(model$fitted.values, model$residuals, main="Fitter values vs. residuals",
 abline(h=0, col="red")
 ```
 
-
 ```{r}
 plot(model.no.outlier$fitted.values, model.no.outlier$residuals, main="Fitter values vs. residuals",
      xlab="Fitted value", ylab="Residual"
@@ -161,16 +160,3 @@ urban.df.2013 <- df %>% filter(Year == 2013)
 urban.df.2013$StationCode
 
 ```
-
-
-
-
-
-
-
-
-
-
-
-
-
