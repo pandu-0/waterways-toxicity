@@ -11,7 +11,15 @@ bibliography: references.bib
 
 # Introduction
 
-Urban land use can affect water quality because pollutants from developed areas may be transported into nearby waterways. In particular, pyrethroid pesticides are associated with toxicity in California watershed sediments, and previous SPoT monitoring found relationships between pyrethroid concentrations, toxicity, and urban land use [@phillips2020spot]. This study examines whether the percentage of urban land use surrounding a monitoring station is associated with the sum of pyrethroid toxic units measured at that station. Using observations from 100 California monitoring stations sampled in 2013, I fit a simple linear regression model with `PercentUrbanLandUse` as the explanatory variable and `SumPyrethroid_ToxicUnits` as the response variable. Because these data are observational, the analysis evaluates association rather than a causal effect.
+Pyrethroids are synthetic insecticides widely used in agriculture and commercial pest-control products, including bug sprays, pet shampoos, and flea and tick treatments. They mimic pyrethrins, natural insecticidal compounds found in chrysanthemum flowers [@HolynskaIwan2020]. Although primarily intended for pest control, pyrethroids can also harm non-target organisms, including bees, fish, and aquatic macroinvertebrates [@RANATUNGA2023100388]. Since they are used in urban areas, pollutants from developed land may be transported into nearby waterways. Previous SPoT monitoring found associations between pyrethroid concentrations, toxicity, and urban land use in California watersheds [@phillips2020spot]. 
+
+
+This study examines whether the percentage of urban land surrounding a monitoring station is associated with the sum of pyrethroid toxic units measured at that station. Using data from 100 California monitoring stations sampled in 2013, I fit a simple linear regression model with `PercentUrbanLandUse` as the explanatory variable and `SumPyrethroid_ToxicUnits` as the response variable. Since the data are observational, the analysis evaluates association rather than causation.
+
+The code for this project is available in GitHub^[Link to project repository: [https://github.com/pandu-0/waterways-toxicity](https://github.com/pandu-0/waterways-toxicity)].
+
+
+
 
 # Data
 
@@ -51,9 +59,7 @@ The key variables that are used to answer the research question are `PercentUrba
 
 ### Sum Pyrethroid Toxic Units
 
-Pyrethroids are man-made insecticides that are used are commonly used by farmers on their crops to protect against insects. They are also used in bug spray, pet shampoos, flea/tick treatment, etc. Pyrethroids kill insects by mimicking natural compounds called pyrethrins found in chrysanthemum flowers that are toxic to insects (HolynskaIwan2020). Although these chemicals are generally not harmful to humans, 
-
-In the dataset chosen for this paper, `SumPyrethroid_ToxicUnits` represents the potential for a pyrethroid pesticide to cause toxicity, according to @phillips2020spot. In order to record these values at the various waterways in California, SPoT surveys are conducted every year between late spring to fall, where sediment is collected from recent stream bed deposits after a high flow season and tested for contaminants like pyrethroid pesticides. The SPoT 10 year report states that the contamination results should not be interpreted "as a characterization of the entire stream in which study sites were located" [@phillips2020spot]. The report rather suggests that the readings should be understood as relative indicators of annual pollutant mobilization and transport within the watersheds. In the dataset, 40 values out of 100 for `SumPyrethroid_ToxicUnits` are 0. This most likely due to the fact these pyrethroid readings correspond to watersheds location at areas that are classified as Open or Agricultural for the their `LandUse`.
+In the dataset chosen for this paper, `SumPyrethroid_ToxicUnits` represents the potential for a pyrethroid pesticide to cause toxicity, according to @phillips2020spot. In order to record these values at the various waterways in California, SPoT surveys are conducted every year between late spring to fall, where sediment is collected from recent stream bed deposits after a high flow season and tested for contaminants like pyrethroid pesticides. The SPoT 10 year report states that the contamination results should not be interpreted "as a characterization of the entire stream in which study sites were located" [@phillips2020spot]. Interestingly, pyrethroids are hydrophobic so they do not dissolve in water [@laskowski2002physical]. They instead drop down to the bottom of the stream and collect as sediment, which is why the `SumPyrethroid_ToxicUnits` readings from the dataset cannot be used to characterize an entire stream's pyrethroid toxicity. The report rather suggests that the readings should be understood as relative indicators of annual pollutant mobilization and transport within the watersheds. In simple terms, the `SumPyrethroid_ToxicUnits` values are only an indicator of how much pollution is moved through the waterway. In the dataset, 40 values out of 100 for `SumPyrethroid_ToxicUnits` are 0. This most likely due to the fact these pyrethroid readings correspond to watersheds location at areas that are classified as Open or Agricultural for the their `LandUse`.
 
 ![Comparison of Percent Urban Land use and Sum Pyrethroid Toxicity in a scatter plot](images/scatter_plot.png){#fig-scatter-plot fig-align="center" width="450"}
 
@@ -104,25 +110,31 @@ The simple linear regression model assumes the following conditions:
 
 :::
 
+# Results
 
+I used the $\verb|lm()|$ function in R to fit a simple regression model @r_core_team. The estimated slope parameter $b_1$ is 0.0635150. This means that the variable `SumPyrethroid_ToxicUnits` is expected to increase by 0.0635150 for each unit in increase of `PercentUrbanLandUse`. The estimated intercept parameter $b_0$ is 0.0008118. This means that when `PercentUrbanLandUse` is 0, the average `SumPyrethroid_ToxicUnits` is 0.0008118. The coefficient of determination, $R^2$ is 0.03223. This means that approximately 3.22% of the variability in `SumPyrethroid_ToxicUnits` is explained by the predictor `PercentUrbanLandUse`.
 
+![](images/model_fit.png){fig-align="center" width="450"}
 
 
 ## Hypothesis Test
 
-To test whether there is an association between the `PercentUrbanLandUse` and `SumPyrethroid_ToxicUnits`, I use a a two-sided hypothesis test with the null and alternative hypothesis as follows:
+To test whether there is an association between the `PercentUrbanLandUse` and `SumPyrethroid_ToxicUnits`, I use a two-sided hypothesis test with the null and alternative hypothesis as follows:
 
 $$
 H_0: \beta_1 = 0, H_a: \beta_1 \neq 0
 $$ 
 
 
-In order to draw any meaningful conclusions from this hypothesis test, it is necessary that the requirements for this test are met: the errors must be independent and normal. As noted in @test-assump that the errors are normal, however, they may not be independent. This puts a limitation on this experiment because violating the assumptions mean that the 
+In order to draw any meaningful conclusions from this hypothesis test, it is necessary that the requirements for this test are met: the errors must be independent and normal [@kutner2005applied]. As noted in @test-assump that the errors are normal, however, they may not be independent. This puts a limitation on this experiment because violating the assumptions means that the hypothesis test is less reliable [@kutner2005applied]. I will conduct the hypothesis test bearing this mind. 
 
-# Results
+If we fail to reject $H_0$, then we did not find evidence that there is a linear association between the predictor and response variables. On the other hand, if we reject $H_0$ in favor of $H_a$, then we say that found evidence that there is a linear association between [@kutner2005applied].
 
-I used the $\verb|lm()|$ function in R to fit a simple regression model @r_core_team. The estimated slope parameter $b_1$ is 0.0635150. This means that the variable `SumPyrethroid_ToxicUnits` is expected to increase by 0.0635150 for each unit in increase of `PercentUrbanLandUse`. The estimated intercept parameter $b_0$ is 0.0008118. This means that when `PercentUrbanLandUse` is 0, the average `SumPyrethroid_ToxicUnits` is 0.0008118.
+Under the null hypothesis, the distribution of $\frac{b_1 - \beta_1}{\hat{se}(b_1)}$ is $t(n-2)$. Using this distribution, I will build a 95% confidence interval for $\beta_1$ with significance level $\alpha$ = 0.05 to control risk of a Type I error. If this interval contains 0, then we fail to reject $H_0$. If this interval does not contain 0, then we reject $H_0$ in favor of $H_a$. The 95% confidence interval for $\beta_1$ is $b_1 \pm t_{1-\frac{\alpha}{2};\text{ } n-2}\cdot\hat{se}(b_1)$. 
 
-![](images/model_fit.png){fig-align="center" width="450"}
+The estimate for $b_1$ is 0.0635150, standard error of $b_1$ is 0.0351555, and we have 100 observations in the dataset, so the interval can be constructed with the values as follows: $0.0635150 \pm t_{0.975;\text{ } 98}\cdot0.0351555$. Once simplified the confidence interval approximately becomes $-0.0062 \leq \beta_1 \leq 0.1333$. Since this interval contains 0, we fail to reject $H_0$. If the conditions of the test are met, then we can say that we did not find evidence that there is a linear association between the predictor and response variables.
+
+
+
 
 # References
