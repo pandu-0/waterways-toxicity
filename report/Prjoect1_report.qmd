@@ -1,12 +1,15 @@
 ---
 title: "Association Between Urban Land Use and Pyrethroid Toxicity in California Waterways"
 author: Pandu Rupanagudi
-date: September 24 2026
+date: October 12 2026
 date-format: long
 abstract: "ABSTRACT IS STILL INCOMPLETE"
 format: pdf 
 number-sections: true
 bibliography: references.bib
+execute:
+  echo: false
+  warning: false
 ---
 
 # Introduction
@@ -19,9 +22,17 @@ This study examines whether the percentage of urban land surrounding a monitorin
 The code for this project is available in GitHub^[Link to project repository: [https://github.com/pandu-0/waterways-toxicity](https://github.com/pandu-0/waterways-toxicity)].
 
 
-
-
 # Data
+
+```{r}
+library(dplyr)
+dataset.url = "https://data.ca.gov/dataset/a7601751-8e18-4d1b-a7f1-e395ca9d3517/resource/4f9dcf98-5fb4-477b-8780-4411c083fee8/download/fig.-4-5.-sum-pyrethroid-toxic-units.csv"
+
+df <- read.csv(dataset.url)
+urban.df <- df %>% filter(Year == 2013) %>% select(PercentUrbanLandUse, SumPyrethroid_ToxicUnits, StationCode) %>% mutate(PercentUrbanLandUse = as.numeric(PercentUrbanLandUse))
+
+```
+
 
 ## Dataset background
 
@@ -47,7 +58,99 @@ Each row in this dataset represents a sample of sediment taken from the watershe
 
 The @fig-station-loc below shows locations of the watersheds in the dataset.
 
-![Watershed station location](images/station-locations.png){#fig-station-loc width="300"}
+```{r}
+#| label: fig-station-loc 
+#| fig-cap: "California Watershed SPoT Monitoring station locations"
+#| fig-align: "center"
+#| fig-width: 4
+#| fig-height: 3
+
+# install.packages(c(
+#   "sf",
+#   "ggplot2",
+#   "httr2"
+# ))
+
+library(sf)
+library(ggplot2)
+library(httr2)
+
+station_codes <- as.vector(urban.df$StationCode)
+
+# Official California Water Board station lookup service
+lookup_url <- "https://gispublic.waterboards.ca.gov/portalserver/rest/services/Hosted/StationLookUp/FeatureServer/0/query"
+
+# Builds a query containing the requested station codes
+where_clause <- paste0(
+  "StationCode IN (", paste0("'", station_codes, "'", collapse = ","), ")"
+)
+
+# Request station locations as GeoJSON
+response <- request(lookup_url) |>
+  req_url_query(
+    where = where_clause,
+    outFields = "*",
+    returnGeometry = "true",
+    f = "geojson"
+  ) |> req_perform()
+
+station_geojson <- resp_body_string(response)
+
+# Save the GeoJSON response temporarily
+geojson_file <- tempfile(fileext = ".geojson")
+writeLines(station_geojson, geojson_file)
+
+# Read the temporary GeoJSON file
+stations <- st_read(
+  dsn = geojson_file,
+  quiet = TRUE
+) |>
+  st_transform(4326)
+
+
+# Get a California state boundary
+california <- map_data("state") |>
+  filter(region == "california")
+
+
+
+stations_plot <- stations |>
+  st_drop_geometry()
+
+ggplot() +
+  geom_polygon(
+    data = california,
+    aes(
+      x = long,
+      y = lat,
+      # group = group
+    ),
+    fill = "gray95",
+    color = "gray40"
+  ) +
+  geom_point(
+    data = stations_plot,
+    aes(
+      x = targetlongitude,
+      y = targetlatitude
+    ),
+    size = 1,
+    alpha = 0.9
+  ) +
+  coord_fixed(
+    xlim = c(-125, -114),
+    ylim = c(32, 43)
+  ) +
+  labs(
+    # title = "Location of SPoT Monitoring Stations Used in the Analysis",
+    x = "Longitude",
+    y = "Latitude",
+    # color = "Land-use category"
+  ) +
+  theme_minimal()
+
+```
+
 
 ## Key Variables
 
@@ -61,9 +164,29 @@ The key variables that are used to answer the research question are `PercentUrba
 
 In the dataset chosen for this paper, `SumPyrethroid_ToxicUnits` represents the potential for a pyrethroid pesticide to cause toxicity, according to @phillips2020spot. In order to record these values at the various waterways in California, SPoT surveys are conducted every year between late spring to fall, where sediment is collected from recent stream bed deposits after a high flow season and tested for contaminants like pyrethroid pesticides. The SPoT 10 year report states that the contamination results should not be interpreted "as a characterization of the entire stream in which study sites were located" [@phillips2020spot]. Interestingly, pyrethroids are hydrophobic so they do not dissolve in water [@laskowski2002physical]. They instead drop down to the bottom of the stream and collect as sediment, which is why the `SumPyrethroid_ToxicUnits` readings from the dataset cannot be used to characterize an entire stream's pyrethroid toxicity. The report rather suggests that the readings should be understood as relative indicators of annual pollutant mobilization and transport within the watersheds. In simple terms, the `SumPyrethroid_ToxicUnits` values are only an indicator of how much pollution is moved through the waterway. In the dataset, 40 values out of 100 for `SumPyrethroid_ToxicUnits` are 0. This most likely due to the fact these pyrethroid readings correspond to watersheds location at areas that are classified as Open or Agricultural for the their `LandUse`.
 
-![Comparison of Percent Urban Land use and Sum Pyrethroid Toxicity in a scatter plot](images/scatter_plot.png){#fig-scatter-plot fig-align="center" width="450"}
 
-# Method
+```{r}
+#| label: fig-scatter
+#| fig-cap: "Scatter plot of Percent Urban Land use and Sum Pyrethroid Toxicity"
+#| fig-align: "center"
+#| fig-width: 5
+#| fig-height: 4
+
+plot(urban.df$PercentUrbanLandUse, urban.df$SumPyrethroid_ToxicUnits,
+     main="Percentage Urban Land Use vs. Sum Pyrethroid Toxic Units",
+     xlab="Percentage Urban Land Use",
+     ylab="Sum Pyrethroid Toxic Units",
+     cex.main=0.8
+     )
+
+model <- lm(SumPyrethroid_ToxicUnits ~ PercentUrbanLandUse, data=urban.df)
+
+```
+
+
+<!-- ![Scatter plot of Percent Urban Land use and Sum Pyrethroid Toxicity](images/scatter_plot.png){#fig-scatter-plot fig-align="center" width="450"} -->
+
+# Method 
 
 To find whether there is an association between the `PercentUrbanLandUse` and `SumPyrethroid_ToxicUnits` in California waterways, I fit a simple linear regression model where the predictor variable is `PercentUrbanLandUse`, denoted as $X_i$, and the response variable is the `SumPyrethroid_ToxicUnits`, denoted as $Y_i$.
 
@@ -91,30 +214,74 @@ The simple linear regression model assumes the following conditions:
 
 5.  Errors are normally distributed and have finite variance
 
-## Testing the assumptions {#test-assump}
+## Testing the assumptions {#sec-test-assump}
 
 1.  The predictor variable used in this model is the percentage of urban land use and the response variable is the Sum Pyrethroid toxicity units. Based on the dataset, the variables accurate represent the quantities such that the research question can be answered.
 
 2.  The stations are distributed across California as shown in @fig-station-loc, but they were selected through a targeted monitoring design rather than random sampling. Therefore, the results should be generalized primarily to SPoT-monitored watersheds and interpreted cautiously when discussing California waterways more broadly.
 
-3.  The scatter plot comparing `PercentUrbanLandUse` and `SumPyrethroid_ToxicUnits` in @fig-scatter-plot and the residual plot in @fig-residual do not show any evidence of the relationship between the variables as non-linear. Therefore, there is no reason to conclude that the fitting a linear model for this case would be incorrect.
+3.  The scatter plot comparing `PercentUrbanLandUse` and `SumPyrethroid_ToxicUnits` in @fig-scatter and the residual plot in @fig-res-qq-1 do not show any evidence of the relationship between the variables as non-linear. Therefore, there is no reason to conclude that the fitting a linear model for this case would be incorrect.
 
 4.  Knowing the sample information about one SPoT monitoring watershed could tell us information about surrounding watershed's `SumPyrethroid_ToxicUnits` values due to the fact that the watersheds chosen when compiling this dataset were not randomly chosen, they were instead picked for a targeted monitoring program. Hence, the errors may not be independent since samples collected from the same region in California could have similar `SumPyrethroid_ToxicUnits` values.
 
-5.  The residual plot below shows that there is unequal variance in the errors. There is also a very noticeable outlier in the data as well which can be seen in @fig-qq. Moreover, to check for normality of errors I have used a QQ-plot as seen in @fig-qq. @fig-qq shows that the error quantiles line up with the normal quantiles line with some deviation towards the right end. However, I will still assume that the errors are normal. 
+5.  The residual plot below shows that there is unequal variance in the errors. There is also a very noticeable outlier in the data as well which can be seen in @fig-res-qq-2. Moreover, to check for normality of errors I have used a QQ-plot as seen in @fig-res-qq-2. @fig-res-qq-2 shows that the error quantiles line up with the normal quantiles line with some deviation towards the right end. However, I will still assume that the errors are normal. 
 
-::: {#fig-elephants layout-ncol=2}
-![Comparing the model residuals and the fitted values](images/residual_plot.png){#fig-residual width="300"}
 
-![QQ-plot comparing the quantiles of the model residuals against the normal quantiles](images/qq-plot.png){#fig-qq width="300"}
+```{r}
+#| layout-ncol: 2
+#| fig-cap: "Residual plot shows unequal variance and QQ-plot shows errors are mostly normal with a visible outlier"
+#| label: fig-res-qq
+#| fig-subcap: 
+#|   - "Residual plot"
+#|   - "QQ-plot of the residuals"
 
-:::
+
+# Plot 1
+plot(
+  model$fitted.values,
+  model$residuals,
+  main = "Fitted Values vs. Residuals",
+  xlab = "Fitted Value",
+  ylab = "Residual",
+  cex.main=0.8
+)
+abline(h = 0, col = "red")
+
+# Plot 2
+res <- residuals(model)
+
+qqnorm(
+  res,
+  main = "Normal Q-Q Plot of Residuals",
+  ylab = "Sample Quantiles",
+  ylim = range(res, na.rm = TRUE),
+  cex.main=0.8
+)
+qqline(res, col = "red", lwd = 2)
+
+
+```
+
+
+
 
 # Results
 
-I used the $\verb|lm()|$ function in R to fit a simple regression model @r_core_team. The estimated slope parameter $b_1$ is 0.0635150. This means that the variable `SumPyrethroid_ToxicUnits` is expected to increase by 0.0635150 for each unit in increase of `PercentUrbanLandUse`. The estimated intercept parameter $b_0$ is 0.0008118. This means that when `PercentUrbanLandUse` is 0, the average `SumPyrethroid_ToxicUnits` is 0.0008118. The coefficient of determination, $R^2$ is 0.03223. This means that approximately 3.22% of the variability in `SumPyrethroid_ToxicUnits` is explained by the predictor `PercentUrbanLandUse`.
+I used the $\verb|lm()|$ function in R to fit a simple regression model [@r_core_team]. The estimated slope parameter $b_1$ is 0.0635150. This means that the variable `SumPyrethroid_ToxicUnits` is expected to increase by 0.0635150 for each unit in increase of `PercentUrbanLandUse`. The estimated intercept parameter $b_0$ is 0.0008118. This means that when `PercentUrbanLandUse` is 0, the average `SumPyrethroid_ToxicUnits` is 0.0008118. The coefficient of determination, $R^2$ is 0.03223. This means that approximately 3.22% of the variability in `SumPyrethroid_ToxicUnits` is explained by the predictor `PercentUrbanLandUse`.
 
-![](images/model_fit.png){fig-align="center" width="450"}
+```{r}
+#| fig-width: 5
+#| fig-height: 4
+#| label: fig-model-fit
+plot(urban.df$PercentUrbanLandUse, urban.df$SumPyrethroid_ToxicUnits,
+     main="Percentage Urban Land Use vs. Sum Pyrethroid Toxic Units \n from 2013 samples with fitted linear regression line",
+     xlab="Percentage Urban Land Use",
+     ylab="Sum Pyrethroid Toxic Units",
+     cex.main=0.8
+     )
+
+abline(model$coefficients[1], model$coefficients[2], col="red")
+```
 
 
 ## Hypothesis Test
@@ -126,7 +293,7 @@ H_0: \beta_1 = 0, H_a: \beta_1 \neq 0
 $$ 
 
 
-In order to draw any meaningful conclusions from this hypothesis test, it is necessary that the requirements for this test are met: the errors must be independent and normal [@kutner2005applied]. As noted in @test-assump that the errors are normal, however, they may not be independent. This puts a limitation on this experiment because violating the assumptions means that the hypothesis test is less reliable [@kutner2005applied]. I will conduct the hypothesis test bearing this mind. 
+In order to draw any meaningful conclusions from this hypothesis test, it is necessary that the requirements for this test are met: the errors must be independent and normal [@kutner2005applied]. As noted in @sec-test-assump that the errors are normal, however, they may not be independent. This puts a limitation on this experiment because violating the assumptions means that the hypothesis test is less reliable [@kutner2005applied]. I will conduct the hypothesis test bearing this mind. 
 
 If we fail to reject $H_0$, then we did not find evidence that there is a linear association between the predictor and response variables. On the other hand, if we reject $H_0$ in favor of $H_a$, then we say that found evidence that there is a linear association between [@kutner2005applied].
 
@@ -135,6 +302,15 @@ Under the null hypothesis, the distribution of $\frac{b_1 - \beta_1}{\hat{se}(b_
 The estimate for $b_1$ is 0.0635150, standard error of $b_1$ is 0.0351555, and we have 100 observations in the dataset, so the interval can be constructed with the values as follows: $0.0635150 \pm t_{0.975;\text{ } 98}\cdot0.0351555$. Once simplified the confidence interval approximately becomes $-0.0062 \leq \beta_1 \leq 0.1333$. Since this interval contains 0, we fail to reject $H_0$. If the conditions of the test are met, then we can say that we did not find evidence that there is a linear association between the predictor and response variables.
 
 
-
-
 # References
+
+
+
+
+
+
+
+
+
+
+
