@@ -23,7 +23,7 @@ waterways-toxicity/
 └── waterways-toxicity.Rproj
 ```
 
-Required R packages can be installed using the following command:\
+Required R packages can be installed using the following command:  
 ```r
 install.packages(c(
   "sf",
