@@ -16,8 +16,8 @@ waterways-toxicity/
 ├── R/
 │   ├── references.bib
 │   ├── report.pdf
-|   └── report.qmd
-|
+│   └── report.qmd
+│
 ├── .gitignore
 ├── README.md
 └── waterways-toxicity.Rproj

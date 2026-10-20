@@ -14,15 +14,24 @@ execute:
 
 # Introduction
 
-Pyrethroids are synthetic insecticides widely used in agriculture and commercial pest-control products, including bug sprays, pet shampoos, and flea and tick treatments. They mimic pyrethrins, natural insecticidal compounds found in chrysanthemum flowers [@HolynskaIwan2020]. Although primarily intended for pest control, pyrethroids can also harm non-target organisms, including bees, fish, and aquatic macroinvertebrates [@RANATUNGA2023100388]. Since they are used in urban areas, pollutants from developed land may be transported into nearby waterways. Previous SPoT monitoring found associations between pyrethroid concentrations, toxicity, and urban land use in California watersheds [@phillips2020spot]. 
+Pyrethroids are synthetic insecticides widely used in agriculture and commercial pest-control products, including bug sprays, pet shampoos, and flea and tick treatments. They mimic pyrethrins, natural insecticidal compounds found in chrysanthemum flowers [@HolynskaIwan2020]. Although primarily intended for pest control, pyrethroids can also harm non-target organisms, including bees, fish, and aquatic macroinvertebrates [@RANATUNGA2023100388]. Since they are used in urban areas, pollutants from developed land may be transported into nearby waterways. Moreover, California's Stream Pollution Trends Monitoring Program (SPoT) found associations between pyrethroid concentrations, toxicity, and urban land use in California watersheds [@phillips2020spot]. After learning this information, I ask the research question: is there an association between how toxic a waterway is in terms of pyrethroids and how much of the surround land is urban?
 
+Hence, this study examines whether the percentage of urban land surrounding a monitoring station is associated with the sum of pyrethroid toxic units measured at that station. Using data from 100 California SPoT monitoring stations sampled in 2013, I fit a simple linear regression model with `PercentUrbanLandUse` as the explanatory variable and `SumPyrethroid_ToxicUnits` as the response variable [@waterboard2019pyrethroid]. Since the data are observational, the analysis evaluates association rather than causation.
 
-This study examines whether the percentage of urban land surrounding a monitoring station is associated with the sum of pyrethroid toxic units measured at that station. Using data from 100 California monitoring stations sampled in 2013, I fit a simple linear regression model with `PercentUrbanLandUse` as the explanatory variable and `SumPyrethroid_ToxicUnits` as the response variable. Since the data are observational, the analysis evaluates association rather than causation.
+Further, I also conduct a two-sided hypothesis test to determine whether there is a linear association between the `PercentUrbanLandUse` and `SumPyrethroid_ToxicUnits` variables. The hypothesis test reveals that there is no evidence for a linear association for between the two variables. This is further explained in @sec-hyp-test.
 
-The code for this project is available in GitHub^[Link to project repository: [https://github.com/pandu-0/waterways-toxicity](https://github.com/pandu-0/waterways-toxicity)].
+The structure of this paper is as follows:
 
+-   @sec-data explains the dataset used and its relevant details\
+-   @sec-method details the statistical methods used\
+-   @sec-results describes the fitted model and its implication\
+-   @sec-discussion discusses the key findings and its implications in regards to the research question
 
-# Data
+The code for this project is available on GitHub[^1].
+
+[^1]: Link to the project repository: <https://github.com/pandu-0/waterways-toxicity>
+
+# Data {#sec-data}
 
 ```{r}
 library(dplyr)
@@ -33,28 +42,35 @@ urban.df <- df %>% filter(Year == 2013) %>% select(PercentUrbanLandUse, SumPyret
 
 ```
 
-
 ## Dataset background
 
 I will be using the Sum Pyrethroid Toxic Units dataset provided by the @waterboard2019pyrethroid. In this paper, the data will be referred to as the pyrethroid dataset for brevity. The pyrethroid dataset was complied for California's 2019 water quality status report by the [Stream Pollution Trends (SPoT) Monitoring Program](https://www.waterboards.ca.gov/water_issues/programs/swamp/spot/). The SPoT program was initiated to monitor and manage the contamination of streams statewide in California.
+
+## Definitions of key terms
+
+The key terms to understanding this paper and its context are described below:
+
+-   **Waterway**: a navigable body of water such as a river, stream, or canal that may be used to follow along using a boat or other means of water transportation.
+-   **Watershed**: an area of land where all the precipitation collects into downhill river, stream or other waterway.
+-   **Pyrethroids**: man-made insecticides commonly used in farming and commercial pest-control products.
 
 ## Variables summary
 
 The dataset contains 807 observations and these 6 relevant columns:
 
-`StationCode`: monitoring watershed station identifier
+`StationCode`: a unique code that identifies a monitoring watershed station in California.
 
-`PercentUrbanLandUse`: percentage of the surrounding land classified as urban
+`PercentUrbanLandUse`: the percentage of the surrounding land classified as urban in a 5-km radius of a SPoT monitoring watershed station.
 
-`SumPyrethroid_ToxicUnits`: sum of pyrethroid pesticides expressed as toxic units
+`SumPyrethroid_ToxicUnits`: the potential for a pyrethroid pesticide to cause toxicity. The values can range from 0 to any positive real number.
 
-`Year`: sampling year
+`Year`: the year a sample of sediment was collected and tested for pyrethroid toxicity from a SPoT monitoring watershed.
 
-`SampleDate`: sampling date
+`SampleDate`: the date a sample of sediment was collected and tested for pyrethroid toxicity from a SPoT monitoring watershed.
 
-`LandUse`: land-use category (Values can be "Urban", "Agriculture", "Open", "Ag/Urban")
+`LandUse`: the category that the surrounding land of a SPoT monitoring watershed is classified as (values can be "Urban", "Agriculture", "Open", "Ag/Urban").
 
-Each row in this dataset represents a sample of sediment taken from the watershed station and tested for the potential for a pyrethroid pesticide to cause toxicity, which is the `SumPyrethroid_ToxicUnits` variable. Moreover, the dataset has samples from the 2008 to 2017. In order to eliminate this time dependence of samples in this dataset, I will only be using samples for the year 2013 to fit a linear regression model and answer the research question. This brings the dataset to subset of 100 rows with all 100 unique stations. I should also note the 2013 subset contains no missing values in either variable used in the regression.
+Each row in this dataset represents a sample of sediment taken from the watershed station and tested for the potential for a pyrethroid pesticide to cause toxicity, which is the `SumPyrethroid_ToxicUnits` variable. Moreover, the dataset has samples from the 2008 to 2017. In order to eliminate this time dependence of samples in this dataset, I will only be using samples for the year 2013 to fit a linear regression model and answer the research question. This brings the dataset to a subset of 100 rows with all 100 unique SPoT monitoring stations that exist in California. I should also note the 2013 subset contains no missing values in either variable used in the regression.
 
 The @fig-station-loc below shows locations of the watersheds in the dataset.
 
@@ -85,7 +101,7 @@ where_clause <- paste0(
   "StationCode IN (", paste0("'", station_codes, "'", collapse = ","), ")"
 )
 
-# Request station locations as GeoJSON
+# Request station locations in the GeoJSON format
 response <- request(lookup_url) |>
   req_url_query(
     where = where_clause,
@@ -104,14 +120,12 @@ writeLines(station_geojson, geojson_file)
 stations <- st_read(
   dsn = geojson_file,
   quiet = TRUE
-) |>
-  st_transform(4326)
+) |> st_transform(4326)
 
 
 # Get a California state boundary
 california <- map_data("state") |>
   filter(region == "california")
-
 
 
 stations_plot <- stations |>
@@ -151,7 +165,6 @@ ggplot() +
 
 ```
 
-
 ## Key Variables
 
 The key variables that are used to answer the research question are `PercentUrbanLandUse` and `SumPyrethroid_ToxicUnits`.
@@ -163,7 +176,6 @@ The key variables that are used to answer the research question are `PercentUrba
 ### Sum Pyrethroid Toxic Units
 
 In the dataset chosen for this paper, `SumPyrethroid_ToxicUnits` represents the potential for a pyrethroid pesticide to cause toxicity, according to @phillips2020spot. In order to record these values at the various waterways in California, SPoT surveys are conducted every year between late spring to fall, where sediment is collected from recent stream bed deposits after a high flow season and tested for contaminants like pyrethroid pesticides. The SPoT 10 year report states that the contamination results should not be interpreted "as a characterization of the entire stream in which study sites were located" [@phillips2020spot]. Interestingly, pyrethroids are hydrophobic so they do not dissolve in water [@laskowski2002physical]. They instead drop down to the bottom of the stream and collect as sediment, which is why the `SumPyrethroid_ToxicUnits` readings from the dataset cannot be used to characterize an entire stream's pyrethroid toxicity. The report rather suggests that the readings should be understood as relative indicators of annual pollutant mobilization and transport within the watersheds. In simple terms, the `SumPyrethroid_ToxicUnits` values are only an indicator of how much pollution is moved through the waterway. In the dataset, 40 values out of 100 for `SumPyrethroid_ToxicUnits` are 0. This most likely due to the fact these pyrethroid readings correspond to watersheds location at areas that are classified as Open or Agricultural for the their `LandUse`.
-
 
 ```{r}
 #| label: fig-scatter
@@ -184,9 +196,7 @@ model <- lm(SumPyrethroid_ToxicUnits ~ PercentUrbanLandUse, data=urban.df)
 ```
 
 
-<!-- ![Scatter plot of Percent Urban Land use and Sum Pyrethroid Toxicity](images/scatter_plot.png){#fig-scatter-plot fig-align="center" width="450"} -->
-
-# Method 
+# Method {#sec-method}
 
 To find whether there is an association between the `PercentUrbanLandUse` and `SumPyrethroid_ToxicUnits` in California waterways, I fit a simple linear regression model where the predictor variable is `PercentUrbanLandUse`, denoted as $X_i$, and the response variable is the `SumPyrethroid_ToxicUnits`, denoted as $Y_i$.
 
@@ -224,8 +234,7 @@ The simple linear regression model assumes the following conditions:
 
 4.  Knowing the sample information about one SPoT monitoring watershed could tell us information about surrounding watershed's `SumPyrethroid_ToxicUnits` values due to the fact that the watersheds chosen when compiling this dataset were not randomly chosen, they were instead picked for a targeted monitoring program. Hence, the errors may not be independent since samples collected from the same region in California could have similar `SumPyrethroid_ToxicUnits` values.
 
-5.  The residual plot below shows that there is unequal variance in the errors. There is also a very noticeable outlier in the data as well which can be seen in @fig-res-qq-2. Moreover, to check for normality of errors I have used a QQ-plot as seen in @fig-res-qq-2. @fig-res-qq-2 shows that the error quantiles line up with the normal quantiles line with some deviation towards the right end. However, I will still assume that the errors are normal. 
-
+5.  The residual plot below shows that there is unequal variance in the errors. There is also a very noticeable outlier in the data as well which can be seen in @fig-res-qq-2. Moreover, to check for normality of errors I have used a QQ-plot as seen in @fig-res-qq-2. @fig-res-qq-2 shows that the error quantiles line up with the normal quantiles line with some deviation towards the right end. However, I will still assume that the errors are normal.
 
 ```{r}
 #| layout-ncol: 2
@@ -262,10 +271,7 @@ qqline(res, col = "red", lwd = 2)
 
 ```
 
-
-
-
-# Results
+# Results {#sec-results}
 
 I used the $\verb|lm()|$ function in R to fit a simple regression model [@r_core_team]. The estimated slope parameter $b_1$ is 0.0635150. This means that the variable `SumPyrethroid_ToxicUnits` is expected to increase by 0.0635150 for each unit in increase of `PercentUrbanLandUse`. The estimated intercept parameter $b_0$ is 0.0008118. This means that when `PercentUrbanLandUse` is 0, the average `SumPyrethroid_ToxicUnits` is 0.0008118. The coefficient of determination, $R^2$ is 0.03223. This means that approximately 3.22% of the variability in `SumPyrethroid_ToxicUnits` is explained by the predictor `PercentUrbanLandUse`.
 
@@ -283,34 +289,22 @@ plot(urban.df$PercentUrbanLandUse, urban.df$SumPyrethroid_ToxicUnits,
 abline(model$coefficients[1], model$coefficients[2], col="red")
 ```
 
-
-## Hypothesis Test
+## Hypothesis Test {#sec-hyp-test}
 
 To test whether there is an association between the `PercentUrbanLandUse` and `SumPyrethroid_ToxicUnits`, I use a two-sided hypothesis test with the null and alternative hypothesis as follows:
 
 $$
 H_0: \beta_1 = 0, H_a: \beta_1 \neq 0
-$$ 
+$$
 
-
-In order to draw any meaningful conclusions from this hypothesis test, it is necessary that the requirements for this test are met: the errors must be independent and normal [@kutner2005applied]. As noted in @sec-test-assump that the errors are normal, however, they may not be independent. This puts a limitation on this experiment because violating the assumptions means that the hypothesis test is less reliable [@kutner2005applied]. I will conduct the hypothesis test bearing this mind. 
+In order to draw any meaningful conclusions from this hypothesis test, it is necessary that the requirements for this test are met: the errors must be independent and normal [@kutner2005applied]. As noted in @sec-test-assump that the errors are normal, however, they may not be independent. This puts a limitation on this experiment because violating the assumptions means that the hypothesis test is less reliable [@kutner2005applied]. I will conduct the hypothesis test bearing this mind.
 
 If we fail to reject $H_0$, then we did not find evidence that there is a linear association between the predictor and response variables. On the other hand, if we reject $H_0$ in favor of $H_a$, then we say that found evidence that there is a linear association between [@kutner2005applied].
 
-Under the null hypothesis, the distribution of $\frac{b_1 - \beta_1}{\hat{se}(b_1)}$ is $t(n-2)$. Using this distribution, I will build a 95% confidence interval for $\beta_1$ with significance level $\alpha$ = 0.05 to control risk of a Type I error. If this interval contains 0, then we fail to reject $H_0$. If this interval does not contain 0, then we reject $H_0$ in favor of $H_a$. The 95% confidence interval for $\beta_1$ is $b_1 \pm t_{1-\frac{\alpha}{2};\text{ } n-2}\cdot\hat{se}(b_1)$. 
+Under the null hypothesis, the distribution of $\frac{b_1 - \beta_1}{\hat{se}(b_1)}$ is $t(n-2)$. Using this distribution, I will build a 95% confidence interval for $\beta_1$ with significance level $\alpha$ = 0.05 to control risk of a Type I error. If this interval contains 0, then we fail to reject $H_0$. If this interval does not contain 0, then we reject $H_0$ in favor of $H_a$. The 95% confidence interval for $\beta_1$ is $b_1 \pm t_{1-\frac{\alpha}{2};\text{ } n-2}\cdot\hat{se}(b_1)$.
 
 The estimate for $b_1$ is 0.0635150, standard error of $b_1$ is 0.0351555, and we have 100 observations in the dataset, so the interval can be constructed with the values as follows: $0.0635150 \pm t_{0.975;\text{ } 98}\cdot0.0351555$. Once simplified the confidence interval approximately becomes $-0.0062 \leq \beta_1 \leq 0.1333$. Since this interval contains 0, we fail to reject $H_0$. If the conditions of the test are met, then we can say that we did not find evidence that there is a linear association between the predictor and response variables.
 
+# Discussion {#sec-discussion}
 
 # References
-
-
-
-
-
-
-
-
-
-
-
