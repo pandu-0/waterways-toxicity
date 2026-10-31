@@ -38,8 +38,8 @@ as mentioned in the California Open Data policy page.
 
 
 ## External Resources Statement
-As a graduate student that is still learning to code in R, I had to rely on LLMs for help to 
-plot the Figure 1, as it requires sending get requests to the official California Water Board station 
+As a graduate student who is still learning to code in R, I had to rely on LLMs for help to 
+plot the Figure 1 in my project report, as it requires sending get requests to the official California Water Board station 
 lookup service, which I am unfamiliar with. Other than this, no external resources were used for this project. 
 
 
