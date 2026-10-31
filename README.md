@@ -2,7 +2,7 @@
 
 Author: Pandu Rupanagudi
 
-Submission Date: 
+Submission Date: October 30
 
 ## Project description:
 This project is a study that makes use of the Sum Pyrethroid Toxic Units 
@@ -12,16 +12,15 @@ station and pyrethroid pesticide toxicity in the waterway.
 
 ## Project Structure:
 ```text
-waterways-toxicity/
-├── R/
-│   ├── references.bib
-│   ├── report.pdf
-│   └── report.qmd
-│
-├── .gitignore
-├── README.md
-└── waterways-toxicity.Rproj
+- R/references.bib
+- R/report.pdf
+- R/report.qmd
+- .gitignore
+- README.md
+- waterways-toxicity.Rproj
 ```
+
+## Necessary packages
 
 Required R packages can be installed using the following command:  
 ```r
@@ -31,6 +30,17 @@ install.packages(c(
   "httr2"
 ))
 ```
+
+## Dataset license
+
+The dataset was obtained from California Open Data. The dataset is publicly usable 
+as mentioned in the California Open Data policy page.
+
+
+## External Resources Statement
+As a graduate student that is still learning to code in R, I had to rely on LLMs for help to 
+plot the Figure 1, as it requires sending get requests to the official California Water Board station 
+lookup service, which I am unfamiliar with. Other than this, no external resources were used for this project. 
 
 
 
